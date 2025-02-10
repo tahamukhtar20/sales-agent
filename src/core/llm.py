@@ -26,6 +26,7 @@ class LLM:
                 top_p=0.9,
                 max_output_tokens=3000,
                 tools=[{"google_search": {}}],
+
             )
         )
         return response.text
@@ -36,19 +37,6 @@ class LLM:
 
     @staticmethod
     def extract_text_from_file(uploaded_file: UploadedFile) -> str:
-        """
-        Extracts text from a PDF, DOCX, PPTX, or TXT uploaded file.
-
-        Parameters:
-            uploaded_file (UploadedFile): The uploaded file object.
-
-        Returns:
-            str: The extracted text.
-
-        Raises:
-            ValueError: If the file extension is not supported.
-        """
-        # Determine the file extension using the uploaded file's name
         ext = os.path.splitext(uploaded_file.name)[1].lower()
 
         if ext == '.txt':

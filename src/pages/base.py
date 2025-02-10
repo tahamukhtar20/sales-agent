@@ -1,6 +1,3 @@
-"""
-Base class for all Streamlit pages
-"""
 import streamlit as st
 
 class Page:

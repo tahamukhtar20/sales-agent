@@ -11,7 +11,6 @@ class DocumentParsingAgent(Agent):
 
     async def generate(self, llm: LLM, **kwargs) -> str:
         parsed_text = llm.extract_text_from_file(self.file)
-        print(parsed_text)
         prompt = (
             f"Based on the following product overview content:\n{parsed_text}\n"
             "Extract additional insights into the product's value proposition and key selling points."

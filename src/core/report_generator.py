@@ -46,14 +46,14 @@ class ReportGenerator:
 
         st.write("📝 Generating Summary based on your description...")
         summary = await self.summary_agent.generate(self.llm, document_text=document_text)
-        self.progress.progress(0.4)
+        self.progress.progress(0.3)
 
         st.write("📊 Analyzing Competitors and Leadership insights...")
         competitor_analysis, leadership_insight = await asyncio.gather(
             self.competitor_analysis_agent.generate(self.llm, summary=summary),
             self.leadership_insight_agent.generate(self.llm, summary=summary),
         )
-        self.progress.progress(0.6)
+        self.progress.progress(0.4)
 
         st.write("📈 Analyzing Strategy...")
         product_summary = await self.product_summary_agent.generate(
@@ -62,7 +62,7 @@ class ReportGenerator:
             competitor_analysis=competitor_analysis,
             leadership_insight=leadership_insight,
         )
-        self.progress.progress(0.8)
+        self.progress.progress(0.5)
 
         st.write("⚙️ Preparing the final report...")
         company_strategy = await self.company_strategy_agent.generate(
@@ -72,7 +72,7 @@ class ReportGenerator:
             leadership_insight=leadership_insight,
             product_summary=product_summary,
         )
-        self.progress.progress(1.0)
+        self.progress.progress(0.6)
 
         return company_strategy
 

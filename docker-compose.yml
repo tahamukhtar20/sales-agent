@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  sales_agent:
+    image: python:3.12
+    container_name: sales_agent
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    ports:
+      - "8501:8501"
+    command: >
+      sh -c "pip install -r requirements.txt && streamlit run app.py"

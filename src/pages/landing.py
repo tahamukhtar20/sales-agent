@@ -1,6 +1,3 @@
-"""
-Landing page for the Sales Agent Analytics Platform
-"""
 import streamlit as st
 from .base import Page
 
