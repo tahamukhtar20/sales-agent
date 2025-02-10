@@ -26,6 +26,7 @@ class SummaryAgent(Agent):
             f"Product Category: {self.product_category}\n"
             f"Value Proposition: {self.value_proposition}\n"
             f"Target Customer: {self.target_customer}\n\n"
+            f"Supporting Details: {document_text}\n\n"
             "Please provide a concise and impactful summary of the product strategy, ensuring clarity and persuasion. "
             "The summary must include:\n"
             "1. Core Features – Highlight the most critical functionalities that define the product.\n"
@@ -37,7 +38,6 @@ class SummaryAgent(Agent):
             "- Concise, clear, and professional\n"
             "- Strategic and data-driven\n"
             "- Persuasive yet factual"
-            f"{document_text}"
         )
 
         return await llm.generate_insight_async(prompt)

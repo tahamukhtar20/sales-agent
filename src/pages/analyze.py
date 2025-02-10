@@ -94,10 +94,10 @@ class Analyze(Page):
     @staticmethod
     def _generate_pdf_report(report_text: str) -> bytes:
         """
-        Convert markdown report text to HTML and generate a properly formatted PDF using WeasyPrint.
+        Convert markdown report text to HTML and generate a properly formatted PDF.
         """
         pdf = MarkdownPdf()
-        pdf.meta["title"] = 'Title'
+        pdf.meta["title"] = 'Sales Agent Report'
         pdf.add_section(Section(report_text, toc=False))
 
         temp_fd, temp_path = tempfile.mkstemp(suffix=".pdf")

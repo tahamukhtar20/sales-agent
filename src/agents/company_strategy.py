@@ -38,15 +38,21 @@ class CompanyStrategyAgent(Agent):
             f"{product_summary}\n\n"
 
             "**Analysis Instructions:**\n"
-            "- Add tables."
-            "- Keep the report under **one page (max 400 words)**.\n"
+            "- Add small table where it is really needed, otherwise don't."
+            "- Keep the report under **one page (300-400 words)**.\n"
             "- Use a structured, easy-to-read format.\n"
             "- Highlight **public statements, press releases, or job postings** that indicate the company’s strategic direction.\n"
             "- Identify any key leaders (e.g., Chief Data Officer, Chief Compliance Officer) and their relevance to the sales conversation.\n"
             "- If available, summarize insights from **10-Ks, annual reports, or industry reports**.\n\n"
+            "- Should be in headings and description format."
+            "- Do use direct names for more legitimacy."
 
             "**References:**\n"
-            "Include a 'References' section at the end, listing all sources used. If you received links from previous me"
-            "add those here as well."
+            "Include a 'References' section at the end, listing all sources used. If you received links from the above "
+            "details, add those in the references as well. Do add explicit links along side other references.\n"
+            "**Do not include any introductory text or explanations—output only the report**."
+
+            "**Return the formatted report text as-is, without any prefatory statements, disclaimers, or summaries.**"
         )
+
         return await llm.generate_insight_async(prompt)
