@@ -3,11 +3,18 @@ from src.core.llm import LLM
 
 
 class LeadershipInsightAgent(Agent):
+    """
+    A specialized agent that generates leadership insights.
+    """
     def __init__(self, company_url: str):
         super().__init__("LeadershipInsightAgent")
         self.company_url = company_url
 
     async def generate(self, llm: LLM, **kwargs) -> str:
+        """
+        Generate insights using the provided LLM instance.
+        This agent is tasked to generate leadership insights.
+        """
         summary = kwargs.get("summary")
         prompt = (
             f"You are analyzing the leadership of a company. The company you are assessing is {self.company_url}. "

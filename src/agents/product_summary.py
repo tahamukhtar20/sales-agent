@@ -3,12 +3,19 @@ from src.core.llm import LLM
 
 
 class ProductSummaryAgent(Agent):
+    """
+    A specialized agent that generates product summary insights.
+    """
     def __init__(self, product_name: str, company_url: str):
         super().__init__("ProductSummaryAgent")
         self.product_name = product_name
         self.company_url = company_url
 
     async def generate(self, llm: LLM, **kwargs) -> str:
+        """
+        Generate insights using the provided LLM instance.
+        This agent is tasked to generate product summary insights.
+        """
         summary = kwargs.get("summary")
         competitor_analysis = kwargs.get("competitor_analysis"),
         leadership_insight = kwargs.get("leadership_insight"),

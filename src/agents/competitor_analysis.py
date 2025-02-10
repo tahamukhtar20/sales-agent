@@ -3,12 +3,19 @@ from src.core.llm import LLM
 
 
 class CompetitorAnalysisAgent(Agent):
+    """
+    A specialized agent that generates competitor analysis insights.
+    """
     def __init__(self, competitor_urls: list):
         super().__init__("CompetitorAnalysisAgent")
         self.competitor_urls = competitor_urls
         self.summary = None
 
     async def generate(self, llm: LLM, **kwargs) -> str:
+        """
+        Generate insights using the provided LLM instance.
+        This agent is tasked to generate competitor analysis.
+        """
         competitors = ", ".join(self.competitor_urls)
         summary = kwargs.get("summary")
         prompt = (

@@ -17,7 +17,6 @@ class ReportGenerator:
     Coordinates multiple agents to produce a comprehensive sales insights report,
     then exports it as a PDF.
     """
-
     def __init__(self, llm: LLM, product_name, company_url, product_category, competitor_urls, value_proposition,
                  target_customer, uploaded_file, progress):
         self.llm = llm
@@ -39,6 +38,9 @@ class ReportGenerator:
         self.document_parsing_agent = DocumentParsingAgent(self.uploaded_file) if self.uploaded_file else None
 
     async def generate_report(self) -> str:
+        """
+        The function containing the entire report generation process.
+        """
         document_text = None
         if self.document_parsing_agent:
             st.write("📄 Parsing your document...")

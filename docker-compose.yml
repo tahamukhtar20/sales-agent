@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   sales_agent:
     image: python:3.12

@@ -9,6 +9,9 @@ class Landing(Page):
     """
 
     def render(self):
+        """
+        Renders the landing page
+        """
         st.set_page_config(page_title="Sales Agent Analytics", page_icon="📊", layout="centered")
 
         st.title("📊 Sales Agent Analytics")

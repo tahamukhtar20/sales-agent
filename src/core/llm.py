@@ -18,6 +18,9 @@ class LLM:
         self.client = genai.Client(api_key=api_key)
 
     def generate_insight(self, prompt: str) -> str:
+        """
+        This function returns the response from the gemini sdk
+        """
         response = self.client.models.generate_content(
             model=self.model_name,
             contents=prompt,
@@ -32,11 +35,17 @@ class LLM:
         return response.text
 
     async def generate_insight_async(self, prompt: str) -> str:
+        """
+        Async wrapper of the generate_insights function
+        """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.generate_insight, prompt)
 
     @staticmethod
     def extract_text_from_file(uploaded_file: UploadedFile) -> str:
+        """
+        A function for extraction of content from the uploaded file
+        """
         ext = os.path.splitext(uploaded_file.name)[1].lower()
 
         if ext == '.txt':

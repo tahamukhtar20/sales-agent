@@ -3,12 +3,19 @@ from src.core.llm import LLM
 
 
 class CompanyStrategyAgent(Agent):
+    """
+    A specialized agent that generates company strategy insights.
+    """
     def __init__(self, company_url: str, product_category: str):
         super().__init__("CompanyStrategyAgent")
         self.company_url = company_url
         self.product_category = product_category
 
     async def generate(self, llm: LLM, **kwargs) -> str:
+        """
+        Generate insights using the provided LLM instance.
+        This agent is tasked to generate company strategy.
+        """
         summary = kwargs.get("summary")
         competitor_analysis = kwargs.get("competitor_analysis")
         leadership_insight = kwargs.get("leadership_insight")

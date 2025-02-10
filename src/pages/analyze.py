@@ -18,6 +18,9 @@ class Analyze(Page):
     """
 
     def render(self):
+        """
+        Render the Insight Analysis Page.
+        """
         st.title("🔍 Insight Analysis Page")
         st.write("Analyze and gain insights into your target accounts.")
 
