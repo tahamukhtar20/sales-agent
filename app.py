@@ -1,25 +1,15 @@
-import streamlit as st
-from dotenv import load_dotenv
 import os
 
-from src.pages import Landing, Analyze
+import streamlit as st
+from dotenv import load_dotenv
+
+from src.pages import Analyze, Landing
 
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+st.set_page_config(page_title="Sales Agent", page_icon="📊", layout="centered")
 
-if __name__ == "__main__":
-    st.session_state.llm_api_key = GEMINI_API_KEY
-    if "current_page" not in st.session_state:
-        st.session_state.current_page = "landing"
+st.session_state.api_key = os.getenv("ANTHROPIC_API_KEY")
+st.session_state.setdefault("current_page", "landing")
 
-    pages = {
-        "landing": Landing("Landing"),
-        "analyze": Analyze("Analyze"),
-    }
-
-    page = pages.get(
-        st.session_state.current_page,
-        pages["landing"]
-    )
-
-    page()
+pages = {"landing": Landing("Landing"), "analyze": Analyze("Analyze")}
+pages.get(st.session_state.current_page, pages["landing"])()

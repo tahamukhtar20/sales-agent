@@ -1,114 +1,117 @@
+import asyncio
 import os
 import tempfile
 
+import anthropic
 import streamlit as st
 from markdown_pdf import MarkdownPdf, Section
 
+from ..core import LLM, AccountBrief, RefusalError, generate_report
+from ..core.documents import SUPPORTED, extract_text
 from .base import Page
-import asyncio
-from ..core import LLM, ReportGenerator
 
 
 class Analyze(Page):
-    """
-    Insight Analysis Page
-    Contains the implementation of the following methods:
-    - render
-    - validate_url
-    """
+    """The form, the run, and the finished brief."""
 
     def render(self):
-        """
-        Render the Insight Analysis Page.
-        """
-        st.title("🔍 Insight Analysis Page")
-        st.write("Analyze and gain insights into your target accounts.")
+        st.title("New account brief")
+        st.write("Tell us what you sell and who you're meeting. The agents research the rest.")
 
-        if "analyzing" not in st.session_state:
-            st.session_state.analyzing = False
+        with st.form("brief"):
+            st.subheader("Your product")
+            product_name = st.text_input("Product name", placeholder="e.g. Acme Data Cloud")
+            product_category = st.text_input("Category", placeholder="e.g. Cloud data platform")
+            value_proposition = st.text_area("Value proposition", placeholder="Why customers buy it, in a few sentences")
+            competitor_urls = st.text_area(
+                "Competitor websites (optional, one per line)", placeholder="https://competitor.example"
+            )
+            document = st.file_uploader(
+                "Product overview (optional)", type=[ext.lstrip(".") for ext in SUPPORTED]
+            )
 
-        with st.expander("🔹 **Enter Product Details**", expanded=not st.session_state.analyzing):
-            product_name = st.text_input("Product Name", placeholder="Enter the name of the product you're selling")
-            company_url = st.text_input("Company URL", placeholder="Enter the URL of the company you are targeting")
-            product_category = st.text_input("Product Category",
-                                             placeholder="e.g., Cloud Data Platform, AI-powered Analytics")
-            competitor_urls = st.text_area("Competitor URLs (one per line)",
-                                           placeholder="Enter competitor website URLs, each on a new line")
-            value_proposition = st.text_area("Value Proposition", placeholder="Describe why your product is valuable")
-            target_customer = st.text_input("Target Customer",
-                                            placeholder="Enter the name or title of the person you are trying to sell to")
-            uploaded_file = st.file_uploader("Upload Product Overview (Optional)", type=["pdf", "docx", "txt"])
+            st.subheader("The account")
+            account_url = st.text_input("Company website", placeholder="https://prospect.example")
+            contact_role = st.text_input("Who you're meeting", placeholder="A name or a job title, e.g. Chief Data Officer")
 
-        if st.button("Analyze"):
-            st.session_state.analyzing = True
-            asyncio.run(Analyze._analyze(product_name, company_url, product_category, competitor_urls, value_proposition,
-                                        target_customer, uploaded_file))
-            st.session_state.analyzing = False
+            submitted = st.form_submit_button("Research and write the brief", type="primary")
 
-    @staticmethod
-    async def _analyze(product_name, company_url, product_category, competitor_urls, value_proposition, target_customer,
-                       uploaded_file):
-        """
-        Analyze the inputs provided by the user and generate a PDF report.
-        """
+        if not submitted:
+            return
+
         try:
-            llm = LLM(model_name="gemini-2.0-flash", api_key=st.session_state.llm_api_key)
+            notes = extract_text(document, document.name) if document else ""
+        except ValueError as e:
+            st.error(str(e))
+            return
 
-            with st.status("🔍 Analyzing...", expanded=True) as status:
-                progress = st.progress(0)
-                st.write("📊 Processing input data...")
+        brief = AccountBrief(
+            product_name=product_name.strip(),
+            product_category=product_category.strip(),
+            value_proposition=value_proposition.strip(),
+            competitor_urls=[u.strip() for u in competitor_urls.splitlines() if u.strip()],
+            product_notes=notes,
+            account_url=account_url.strip(),
+            contact_role=contact_role.strip(),
+        )
+        if problems := brief.errors():
+            for problem in problems:
+                st.error(problem)
+            return
 
-                report_generator = ReportGenerator(
-                    llm, product_name=product_name, company_url=company_url, product_category=product_category,
-                    competitor_urls=competitor_urls, value_proposition=value_proposition,
-                    target_customer=target_customer,
-                    uploaded_file=uploaded_file, progress=progress
-                )
+        if not st.session_state.get("api_key"):
+            st.error("No Anthropic API key is configured. Set ANTHROPIC_API_KEY and restart the app.")
+            return
 
-                if not report_generator.validate_inputs():
-                    st.error("⚠️ Invalid inputs! Please check your entries and try again.")
-                    st.session_state.analyzing = False
-                    return
-
-                progress.progress(0.2)
-                report_text = await report_generator.generate_report()
-                progress.progress(0.7)
-
-                pdf_data = Analyze._generate_pdf_report(report_text)
-                progress.progress(1.0)
-
-                st.success("🎉 Analysis complete! Download your report below.")
-                st.download_button(
-                    label="📥 Download Report (PDF)",
-                    data=pdf_data,
-                    file_name="Report.pdf",
-                    mime="application/pdf"
-                )
-
-                status.update(label="✅ Analysis completed!", state="complete")
-
-        except Exception as e:
-            st.error(f"❌ An error occurred: {e}")
-            st.session_state.analyzing = False
+        self._run(brief)
 
     @staticmethod
-    def _generate_pdf_report(report_text: str) -> bytes:
-        """
-        Convert markdown report text to HTML and generate a properly formatted PDF.
-        """
+    def _run(brief: AccountBrief):
+        llm = LLM(api_key=st.session_state.api_key)
+        with st.status("Working on it…", expanded=True) as status:
+            bar = st.progress(0.0)
+
+            def progress(message: str, done: float):
+                bar.progress(done)
+                if done < 1:
+                    st.write(message)
+
+            try:
+                report = asyncio.run(generate_report(llm, brief, progress))
+            except RefusalError as e:
+                status.update(label="Stopped", state="error")
+                st.error(str(e))
+                return
+            except anthropic.AuthenticationError:
+                status.update(label="Stopped", state="error")
+                st.error("The Anthropic API key was rejected.")
+                return
+            except anthropic.RateLimitError:
+                status.update(label="Stopped", state="error")
+                st.error("Rate limited by the API. Wait a minute and try again.")
+                return
+            except (anthropic.APIStatusError, anthropic.APIConnectionError) as e:
+                status.update(label="Stopped", state="error")
+                st.error(f"The API request failed: {e}")
+                return
+            status.update(label="Brief ready", state="complete", expanded=False)
+
+        markdown = report.markdown()
+        st.download_button(
+            "Download as PDF", data=Analyze._pdf(markdown), file_name="account-brief.pdf", mime="application/pdf"
+        )
+        st.markdown(markdown)
+
+    @staticmethod
+    def _pdf(markdown: str) -> bytes:
         pdf = MarkdownPdf()
-        pdf.meta["title"] = 'Sales Agent Report'
-        pdf.add_section(Section(report_text, toc=False))
-
-        temp_fd, temp_path = tempfile.mkstemp(suffix=".pdf")
-        os.close(temp_fd)
-
+        pdf.meta["title"] = "Account brief"
+        pdf.add_section(Section(markdown, toc=False))
+        fd, path = tempfile.mkstemp(suffix=".pdf")
+        os.close(fd)
         try:
-            pdf.save(temp_path)
-
-            with open(temp_path, "rb") as f:
-                pdf_bytes = f.read()
+            pdf.save(path)
+            with open(path, "rb") as f:
+                return f.read()
         finally:
-            os.remove(temp_path)
-
-        return pdf_bytes
+            os.remove(path)

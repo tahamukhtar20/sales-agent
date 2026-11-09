@@ -1,13 +1,10 @@
 services:
-  sales_agent:
-    image: python:3.12
-    container_name: sales_agent
+  sales-agent:
+    image: python:3.12-slim
     working_dir: /app
     volumes:
       - .:/app
-    environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    env_file: .env
     ports:
       - "8501:8501"
-    command: >
-      sh -c "pip install -r requirements.txt && streamlit run app.py"
+    command: sh -c "pip install -r requirements.txt && streamlit run app.py --server.address 0.0.0.0"

@@ -1,23 +1,17 @@
 import streamlit as st
+
 from .base import Page
 
+
 class Landing(Page):
-    """
-    Landing page for the Sales Agent Analytics Platform
-    Contains the implementation of the following methods:
-    - render
-    """
-
     def render(self):
-        """
-        Renders the landing page
-        """
-        st.set_page_config(page_title="Sales Agent Analytics", page_icon="📊", layout="centered")
-
-        st.title("📊 Sales Agent Analytics")
-        st.subheader("Unlock powerful insights and make data-driven sales decisions.")
-        st.write("The Sales Agent Analytics Platform is an AI-powered tool designed to help sales representatives gain deep insights into their target accounts. By leveraging advanced GPT models, it analyzes company strategies, competitor activities, and industry trends to provide a data-driven approach to sales. With a user-friendly interface, automated research capabilities, and intelligent recommendations, this platform empowers sales teams to make informed decisions and close deals more effectively. 🚀")
-
-        if st.button("🚀 Create New Analysis", help="Start a new sales data analysis"):
+        st.title("Sales Agent")
+        st.subheader("A one-page brief for your next sales meeting, researched for you.")
+        st.write(
+            "Describe your product and the company you're meeting. Research agents built on Claude search "
+            "the web for the account's priorities, the people you'll meet and how your competitors compare, "
+            "then write a brief with talking points. Every fact in the brief comes from a cited source."
+        )
+        if st.button("Create a brief", type="primary"):
             st.session_state.current_page = "analyze"
             st.rerun()

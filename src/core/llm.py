@@ -1,85 +1,80 @@
-import asyncio
-import os
-from google import genai
-from google.genai import types
-from streamlit.runtime.uploaded_file_manager import UploadedFile
+"""Thin async wrapper around the Anthropic Messages API, shared by every agent."""
 
-import PyPDF2
-import docx
-from pptx import Presentation
+import os
+from dataclasses import dataclass, field
+
+import anthropic
+
+DEFAULT_MODEL = "claude-sonnet-5-5"
+# Server-side web search: Anthropic runs the searches and returns cited results.
+WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 5}
+# The server-side search loop can pause a long turn; we resume it at most this many times.
+MAX_CONTINUATIONS = 5
+
+
+@dataclass(frozen=True)
+class Source:
+    title: str
+    url: str
+
+
+@dataclass
+class AgentOutput:
+    text: str
+    sources: list[Source] = field(default_factory=list)
+
+
+class RefusalError(RuntimeError):
+    """The model declined the request."""
 
 
 class LLM:
-    """
-    LLM wrapper for Gemini API calls.
-    """
-    def __init__(self, api_key: str, model_name: str = "gemini-2.0-flash"):
-        self.model_name = model_name
-        self.client = genai.Client(api_key=api_key)
+    def __init__(self, api_key: str | None = None, model: str | None = None):
+        self.client = anthropic.AsyncAnthropic(api_key=api_key)
+        self.model = model or os.getenv("ANTHROPIC_MODEL", DEFAULT_MODEL)
 
-    def generate_insight(self, prompt: str) -> str:
-        """
-        This function returns the response from the gemini sdk
-        """
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.7,
-                top_p=0.9,
-                max_output_tokens=3000,
-                tools=[{"google_search": {}}],
+    async def run(self, system: str, prompt: str, *, web_search: bool = False, effort: str = "medium") -> AgentOutput:
+        """Runs one agent turn. With web_search, Claude searches the web and cites what it uses."""
+        messages = [{"role": "user", "content": prompt}]
+        options = {
+            "model": self.model,
+            "max_tokens": 16000,
+            "system": system,
+            "output_config": {"effort": effort},
+            # If a safety classifier declines, the API retries on a fallback model in the same call.
+            "betas": ["server-side-fallback-2026-07-01"],
+            "fallbacks": "default",
+        }
+        if web_search:
+            options["tools"] = [WEB_SEARCH_TOOL]
 
-            )
-        )
-        return response.text
+        content = []
+        for _ in range(MAX_CONTINUATIONS + 1):
+            response = await self.client.beta.messages.create(messages=messages, **options)
+            if response.stop_reason == "refusal":
+                category = response.stop_details.category if response.stop_details else None
+                raise RefusalError(f"The model declined this request ({category or 'no category given'}).")
+            content.extend(response.content)
+            if response.stop_reason != "pause_turn":
+                break
+            # Resume a paused search loop by sending back everything produced so far.
+            messages = [messages[0], {"role": "assistant", "content": content}]
 
-    async def generate_insight_async(self, prompt: str) -> str:
-        """
-        Async wrapper of the generate_insights function
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.generate_insight, prompt)
+        return AgentOutput(text=_text(content), sources=_sources(content))
 
-    @staticmethod
-    def extract_text_from_file(uploaded_file: UploadedFile) -> str:
-        """
-        A function for extraction of content from the uploaded file
-        """
-        ext = os.path.splitext(uploaded_file.name)[1].lower()
 
-        if ext == '.txt':
-            uploaded_file.seek(0)
-            data = uploaded_file.read()
-            return data.decode('utf-8')
+def _text(content) -> str:
+    # Citations split the answer into several text blocks; joined, they read as one answer.
+    return "".join(block.text for block in content if block.type == "text").strip()
 
-        elif ext == '.pdf':
-            text = ""
-            uploaded_file.seek(0)
-            reader = PyPDF2.PdfReader(uploaded_file)
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-            return text
 
-        elif ext in ['.docx', '.doc']:
-            if ext == '.doc':
-                raise ValueError("Extraction for .doc files is not supported. Please convert to .docx format.")
-            uploaded_file.seek(0)
-            doc = docx.Document(uploaded_file)
-            paragraphs = [para.text for para in doc.paragraphs if para.text]
-            return "\n".join(paragraphs)
-
-        elif ext == '.pptx':
-            uploaded_file.seek(0)
-            prs = Presentation(uploaded_file)
-            text_runs = []
-            for slide in prs.slides:
-                for shape in slide.shapes:
-                    if hasattr(shape, "text") and shape.text:
-                        text_runs.append(shape.text)
-            return "\n".join(text_runs)
-
-        else:
-            raise ValueError(f"Unsupported file extension: {ext}")
+def _sources(content) -> list[Source]:
+    """The web pages Claude actually cited, in order of first use."""
+    seen: dict[str, Source] = {}
+    for block in content:
+        if block.type != "text":
+            continue
+        for citation in block.citations or []:
+            if citation.type == "web_search_result_location" and citation.url not in seen:
+                seen[citation.url] = Source(title=citation.title or citation.url, url=citation.url)
+    return list(seen.values())
