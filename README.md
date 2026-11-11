@@ -34,6 +34,8 @@ docker compose up
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | Yes | | Anthropic API key |
 | `ANTHROPIC_MODEL` | No | `claude-sonnet-5-5` | Claude model used by the agents |
+| `SESSION_BRIEF_LIMIT` | No | `2` | Briefs per browser session; `0` turns the limit off |
+| `DAILY_BRIEF_LIMIT` | No | `10` | Briefs per UTC day across all visitors; `0` turns the limit off |
 
 ## Limitations
 

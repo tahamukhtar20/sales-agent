@@ -6,7 +6,7 @@ import anthropic
 import streamlit as st
 from markdown_pdf import MarkdownPdf, Section
 
-from ..core import LLM, AccountBrief, RefusalError, generate_report
+from ..core import LLM, AccountBrief, RefusalError, generate_report, limits
 from ..core.documents import SUPPORTED, extract_text
 from .base import Page
 
@@ -63,6 +63,10 @@ class Analyze(Page):
             st.error("No Anthropic API key is configured. Set ANTHROPIC_API_KEY and restart the app.")
             return
 
+        if reason := limits.check():
+            st.warning(reason)
+            return
+        limits.record()
         self._run(brief)
 
     @staticmethod
