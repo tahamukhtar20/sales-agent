@@ -10,7 +10,9 @@ DEFAULT_MODEL = "claude-sonnet-5-5"
 # allowed_callers "direct" turns off dynamic filtering. With filtering on, Claude reads
 # search results through code execution and the answer carries no web citations, and
 # the source list is built from those citations.
-WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 5, "allowed_callers": ["direct"]}
+# Direct searches count against max_uses for the whole turn, and the research agents
+# often issue several in parallel, so 5 was hit before any results came back.
+WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 12, "allowed_callers": ["direct"]}
 # The server-side search loop can pause a long turn; we resume it at most this many times.
 MAX_CONTINUATIONS = 5
 
