@@ -2,7 +2,7 @@
 
 import asyncio
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from src.core.brief import AccountBrief
 from src.core.llm import LLM, AgentOutput, Source
@@ -14,12 +14,18 @@ Progress = Callable[[str, float], None]
 class Report:
     briefing: str
     sources: list[Source]
+    # Pages the research turned up, used only when nothing was cited.
+    searched: list[Source] = field(default_factory=list)
 
     def markdown(self) -> str:
-        if not self.sources:
+        if self.sources:
+            heading, pages = "Sources", self.sources
+        elif self.searched:
+            heading, pages = "Pages the research read", self.searched
+        else:
             return self.briefing
-        listed = "\n".join(f"{i}. [{s.title}]({s.url})" for i, s in enumerate(self.sources, 1))
-        return f"{self.briefing}\n\n## Sources\n\n{listed}\n"
+        listed = "\n".join(f"{i}. [{s.title}]({s.url})" for i, s in enumerate(pages, 1))
+        return f"{self.briefing}\n\n## {heading}\n\n{listed}\n"
 
 
 async def generate_report(llm: LLM, brief: AccountBrief, progress: Progress = lambda message, done: None) -> Report:
@@ -43,5 +49,6 @@ async def generate_report(llm: LLM, brief: AccountBrief, progress: Progress = la
     briefing = await BriefingAgent().run(llm, brief, context)
 
     sources = list({s.url: s for result in results for s in result.sources}.values())
+    searched = list({s.url: s for result in results for s in result.searched}.values())
     progress("Done", 1.0)
-    return Report(briefing=briefing.text, sources=sources)
+    return Report(briefing=briefing.text, sources=sources, searched=searched)
