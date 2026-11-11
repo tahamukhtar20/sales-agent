@@ -2,7 +2,7 @@
 
 Research agents that prepare a salesperson for a first meeting. Describe your product and the company you're meeting, and Sales Agent searches the web for the account's priorities, the people in the room and how your competitors compare. It then writes a one-page brief with talking points. Every source in the brief is a page the agents actually cited.
 
-Built with Python, Streamlit and Claude (Sonnet 5.5 with server-side web search).
+Built with Python, Streamlit and Claude (Sonnet 5.5 with server-side web search). Live at [sales-agent.tahamukhtar.com](https://sales-agent.tahamukhtar.com).
 
 ## How it works
 
@@ -41,6 +41,10 @@ docker compose up
 
 - Results depend on what is publicly findable; for small or private companies the brief says when it couldn't verify something.
 - Each brief makes four or five model calls with up to fifteen web searches, so it takes a minute or two and costs a few cents.
+
+## Deployment
+
+The app runs on Streamlit Community Cloud, with the API key and the limits set in the app's Secrets. Streamlit Community Cloud doesn't support custom domains, so `redirect/` is a small Cloudflare Worker that sends sales-agent.tahamukhtar.com to the Streamlit URL (`npx wrangler deploy` from that folder).
 
 ## License
 

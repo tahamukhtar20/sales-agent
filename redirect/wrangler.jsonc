@@ -1,0 +1,6 @@
+{
+  "name": "sales-agent-redirect",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  "routes": [{ "pattern": "sales-agent.tahamukhtar.com", "custom_domain": true }]
+}
