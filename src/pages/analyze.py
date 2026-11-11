@@ -100,6 +100,13 @@ class Analyze(Page):
                 return
             status.update(label="Brief ready", state="complete", expanded=False)
 
+        with st.expander("Research log"):
+            for name, searches, found, cited, errors in report.log:
+                line = f"**{name}**: {searches} searches, {found} pages found, {cited} cited"
+                if errors:
+                    line += f"; failed searches: {', '.join(errors)}"
+                st.markdown(line)
+
         markdown = report.markdown()
         st.download_button(
             "Download as PDF", data=Analyze._pdf(markdown), file_name="account-brief.pdf", mime="application/pdf"

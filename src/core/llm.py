@@ -28,6 +28,10 @@ class AgentOutput:
     sources: list[Source] = field(default_factory=list)
     # Every page the searches returned, cited or not.
     searched: list[Source] = field(default_factory=list)
+    # Searches attempted and the error codes of any that failed (web search reports
+    # failures inside the response, not as exceptions).
+    searches: int = 0
+    search_errors: list[str] = field(default_factory=list)
 
 
 class RefusalError(RuntimeError):
@@ -66,7 +70,13 @@ class LLM:
             # Resume a paused search loop by sending back everything produced so far.
             messages = [messages[0], {"role": "assistant", "content": content}]
 
-        return AgentOutput(text=_text(content), sources=_sources(content), searched=_searched(content))
+        return AgentOutput(
+            text=_text(content),
+            sources=_sources(content),
+            searched=_searched(content),
+            searches=sum(1 for b in content if b.type == "server_tool_use" and b.name == "web_search"),
+            search_errors=_search_errors(content),
+        )
 
 
 def _text(content) -> str:
@@ -96,3 +106,12 @@ def _searched(content) -> list[Source]:
             if result.url not in seen:
                 seen[result.url] = Source(title=result.title or result.url, url=result.url)
     return list(seen.values())
+
+
+def _search_errors(content) -> list[str]:
+    """Error codes of failed searches, e.g. "too_many_requests" or "max_uses_exceeded"."""
+    return [
+        getattr(block.content, "error_code", "unknown")
+        for block in content
+        if block.type == "web_search_tool_result" and not isinstance(block.content, list)
+    ]
