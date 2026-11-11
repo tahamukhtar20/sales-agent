@@ -40,7 +40,7 @@ docker compose up
 ## Limitations
 
 - Results depend on what is publicly findable; for small or private companies the brief says when it couldn't verify something.
-- Each brief makes four or five model calls with up to 36 web searches, so it takes a minute or two and costs a few cents.
+- Each brief makes four or five model calls with up to 36 web searches, so it takes a minute or two and costs roughly $0.35 on Sonnet 5.5.
 
 ## Deployment
 
