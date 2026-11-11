@@ -39,3 +39,9 @@ docker compose up
 
 - Results depend on what is publicly findable; for small or private companies the brief says when it couldn't verify something.
 - Each brief makes four or five model calls with up to fifteen web searches, so it takes a minute or two and costs a few cents.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
+
+The `markdown-pdf` dependency pulls in PyMuPDF, which is licensed under AGPL-3.0.
