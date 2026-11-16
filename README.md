@@ -2,7 +2,7 @@
 
 Research agents that prepare a salesperson for a first meeting. Describe your product and the company you're meeting, and Sales Agent searches the web for the account's priorities, the people in the room and how your competitors compare. It then writes a one-page brief with talking points. Every source in the brief is a page the agents actually cited.
 
-Built with Python, Streamlit and Claude (Sonnet 5.5 with server-side web search). Live at [sales-agent.tahamukhtar.com](https://sales-agent.tahamukhtar.com).
+Built with Python, Streamlit and Claude (Sonnet 5.5 with server-side web search). Live at [sales-agent.tahamukhtar.com](https://sales-agent.tahamukhtar.com). The demo runs on Streamlit Community Cloud, which puts apps to sleep after a period without visitors; if you see a sleep page, click the button to wake it and give it about a minute to start.
 
 ## How it works
 
